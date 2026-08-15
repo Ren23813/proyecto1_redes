@@ -1,11 +1,11 @@
 """
 Logger de interacciones (solicitudes/respuestas).
 
-En la Fase 1 se usa para registrar las llamadas al LLM. Está diseñado
-para reutilizarse para la Fase 2, para registrar los mensajes
-JSON-RPC intercambiados con los servidores MCP (requisito #3 del proyecto).
-En fase 2, solo cambia el valor de `source` (ej. "mcp:filesystem", "mcp:git",
-"mcp:custom") y `method` (ej. "tools/call", "initialize").
+Registra llamadas al LLM. 
+Se reutilizará para el resto del proyecto, para registrar los mensajes
+JSON-RPC intercambiados con los servidores MCP.
+Para su reutilización, solo se deberá cambiar el valor de `source` ("mcp:filesystem", "mcp:git",
+"mcp:custom") y `method` ("tools/call", "initialize").
 
 Cada entrada se imprime en consola y además se persiste en
 logs/interactions.jsonl (un objeto JSON por línea)

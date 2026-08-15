@@ -1,0 +1,1 @@
+{"timestamp": "2026-08-18T07:34:54.450136+00:00", "direction": "request", "source": "llm", "method": "messages.create", "payload": {"model": "claude-haiku-4.5", "max_tokens": 1024, "messages": [{"role": "user", "content": "quien fue alan turing"}]}}
