@@ -1,27 +1,29 @@
 """
-Punto de entrada del chatbot (conexión LLM + contexto + logging).
+Punto de entrada del chatbot (Fase 1: conexión LLM + contexto + logging).
 
 Uso:
     python main.py
 """
 from src.config import load_config
 from src.interaction_logger import InteractionLogger
+from src.llm.factory import build_provider
 from src.llm_client import LLMClient
 
 
-def print_banner() -> None:
-    print("-" * 60)
+def print_banner(provider_name: str) -> None:
     print("  Chatbot MCP - Proyecto 1 (Redes)")
+    print(f"  Proveedor de LLM: {provider_name}")
     print("  Comandos: 'salir' para terminar, 'reset' para limpiar contexto")
-    print("-" * 60)
+
 
 
 def main() -> None:
     config = load_config()
     logger = InteractionLogger(log_file=config.log_file)
-    llm = LLMClient(api_key=config.api_key, model=config.model, logger=logger)
+    provider = build_provider(config)
+    llm = LLMClient(provider=provider, logger=logger)
 
-    print_banner()
+    print_banner(config.llm_provider)
 
     while True:
         try:
