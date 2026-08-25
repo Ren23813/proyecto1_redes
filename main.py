@@ -2,40 +2,51 @@
 Punto de entrada del chatbot.
 
 Fase 1: conexión LLM + contexto + logging.
-Fase 2: el LLM ahora puede invocar tools de servidores MCP conectados.
-
-Por ahora solo se conecta el servidor de prueba `echo-test` para validar
+Fase 2: el LLM puede invocar tools de servidores MCP conectados.
+Fase 3: se conectan los servidores oficiales Filesystem y Git.
 
 Uso:
     python main.py
 """
-import sys
+from pathlib import Path
+from typing import List
 
-from src.config import load_config
+from src.config import Config, load_config
 from src.interaction_logger import InteractionLogger
 from src.llm.factory import build_provider
 from src.llm_client import LLMClient
 from src.mcp.client import MCPClient
 from src.mcp.stdio_transport import StdioTransport
 from src.mcp.tool_router import MCPToolRouter
+from src.workspace import ensure_git_repo, ensure_workspace
 
 
-def connect_mcp_servers(logger: InteractionLogger) -> list[MCPClient]:
+def connect_mcp_servers(logger: InteractionLogger, config: Config) -> List[MCPClient]:
     """
     Lanza y conecta todos los servidores MCP que el chatbot debe usar.
 
-    TODO (Fase 3): agregar aquí Filesystem y Git oficiales, ej.:
-        MCPClient(
-            name="filesystem",
-            transport=StdioTransport(["npx", "-y", "@modelcontextprotocol/server-filesystem", "<dir>"]),
-            logger=logger,
-        )
-    TODO (Fase 4): servidor custom local (eventualmente)
+    Filesystem y Git operan sobre `config.workspace_dir` -- una carpeta
+    dedicada para que el chatbot juegue con archivos/commits sin tocar el
+    repositorio real del proyecto. Ver src/workspace.py para el porqué del
+    bootstrap de `git init` antes de lanzar el servidor de git.
+
+    TODO (Fase 4): agregar aquí el servidor custom local.
     """
+    ensure_workspace(config.workspace_dir)
+    ensure_git_repo(config.workspace_dir)
+
     servers = [
         MCPClient(
-            name="echo-test",
-            transport=StdioTransport([sys.executable, "scripts/echo_server.py"]),
+            name="filesystem",
+            transport=StdioTransport(
+                # Yo tengo Bun como manejador de nodejs, pero si quien lo corre tiene npm, cambiarlo por npx
+                ["bunx", "-y", "@modelcontextprotocol/server-filesystem", str(config.workspace_dir)]
+            ),
+            logger=logger,
+        ),
+        MCPClient(
+            name="git",
+            transport=StdioTransport(["uvx", "mcp-server-git", "--repository", str(config.workspace_dir)]),
             logger=logger,
         ),
     ]
@@ -45,9 +56,10 @@ def connect_mcp_servers(logger: InteractionLogger) -> list[MCPClient]:
     return servers
 
 
-def print_banner(provider_name: str) -> None:
+def print_banner(provider_name: str, workspace_dir: Path) -> None:
     print("  Chatbot MCP - Proyecto 1 (Redes)")
     print(f"  Proveedor de LLM: {provider_name}")
+    print(f"  Workspace (Filesystem/Git): {workspace_dir}")
     print("  Comandos: 'salir' para terminar, 'reset' para limpiar contexto")
 
 
@@ -57,12 +69,12 @@ def main() -> None:
     logger = InteractionLogger(log_file=config.log_file)
     provider = build_provider(config, logger)
 
-    mcp_servers = connect_mcp_servers(logger)
+    mcp_servers = connect_mcp_servers(logger, config)
     tool_router = MCPToolRouter(mcp_servers)
 
     llm = LLMClient(provider=provider, logger=logger, tool_router=tool_router)
 
-    print_banner(config.llm_provider)
+    print_banner(config.llm_provider, config.workspace_dir)
 
     try:
         while True:
@@ -96,3 +108,8 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+##crea un archivo README.md que diga 'Hola desde MCP' y luego agrégalo y haz commit al repositorio con el mensaje "primer commit"
+##dime exactamente la ubicacion del archivo
+##edita el mismo archivo y agrega tu nombre de modelo "Hola desde MPC - te habla [modelo]"
