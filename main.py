@@ -4,10 +4,12 @@ Punto de entrada del chatbot.
 Fase 1: conexión LLM + contexto + logging.
 Fase 2: el LLM puede invocar tools de servidores MCP conectados.
 Fase 3: se conectan los servidores oficiales Filesystem y Git.
+Fase 4: se conecta el servidor custom local (Farmacia + Mini Clínica).
 
 Uso:
     python main.py
 """
+import sys
 from pathlib import Path
 from typing import List
 
@@ -29,8 +31,6 @@ def connect_mcp_servers(logger: InteractionLogger, config: Config) -> List[MCPCl
     dedicada para que el chatbot juegue con archivos/commits sin tocar el
     repositorio real del proyecto. Ver src/workspace.py para el porqué del
     bootstrap de `git init` antes de lanzar el servidor de git.
-
-    TODO (Fase 4): agregar aquí el servidor custom local.
     """
     ensure_workspace(config.workspace_dir)
     ensure_git_repo(config.workspace_dir)
@@ -47,6 +47,11 @@ def connect_mcp_servers(logger: InteractionLogger, config: Config) -> List[MCPCl
         MCPClient(
             name="git",
             transport=StdioTransport(["uvx", "mcp-server-git", "--repository", str(config.workspace_dir)]),
+            logger=logger,
+        ),
+        MCPClient(
+            name="pharmacy",
+            transport=StdioTransport([sys.executable, "server_local/server.py"]),
             logger=logger,
         ),
     ]

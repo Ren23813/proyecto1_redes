@@ -6,7 +6,7 @@ Formato de Ollama (para referencia, distinto al de Anthropic):
   "parameters"}}, ...]` (estilo OpenAI).
 - Si el modelo quiere usar una tool, `message.tool_calls` trae una lista
   de `{"function": {"name", "arguments"}}` (arguments ya viene como dict,
-  no como string JSON). No trae un "id" por llamada.
+  no como string JSON).
 - Se responde agregando el mensaje del assistant tal cual (incluye
   tool_calls), y por cada tool_call un mensaje `{"role":"tool",
   "content": resultado}`.
@@ -17,7 +17,7 @@ import requests
 
 from src.interaction_logger import InteractionLogger
 from src.llm.base import LLMProvider
-from src.llm.types import MAX_TOOL_ITERATIONS, ToolCall, ToolSpec
+from src.llm.types import MAX_TOOL_ITERATIONS, CompletionResult, ToolCall, ToolInteraction, ToolSpec
 
 
 class OllamaProvider(LLMProvider):
@@ -32,7 +32,7 @@ class OllamaProvider(LLMProvider):
         tools: Optional[List[ToolSpec]] = None,
         tool_executor: Optional[Callable[[ToolCall], str]] = None,
         max_tokens: int = 1024,
-    ) -> str:
+    ) -> CompletionResult:
         ollama_tools = (
             [
                 {
@@ -46,6 +46,7 @@ class OllamaProvider(LLMProvider):
         )
 
         conversation = list(messages)  # copia local; solo vive durante este turno
+        interactions: List[ToolInteraction] = []
 
         for iteration in range(MAX_TOOL_ITERATIONS):
             payload = {
@@ -68,10 +69,13 @@ class OllamaProvider(LLMProvider):
 
             tool_calls = message.get("tool_calls") or []
             if not tool_calls:
-                return message.get("content", "")
+                return CompletionResult(text=message.get("content", ""), tool_interactions=interactions)
 
             if tool_executor is None:
-                return "[El modelo pidió usar una tool, pero no hay tool_executor configurado.]"
+                return CompletionResult(
+                    text="[El modelo pidió usar una tool, pero no hay tool_executor configurado.]",
+                    tool_interactions=interactions,
+                )
 
             conversation.append(message)
 
@@ -79,6 +83,12 @@ class OllamaProvider(LLMProvider):
                 fn = raw_call["function"]
                 call = ToolCall(name=fn["name"], arguments=fn.get("arguments", {}))
                 result_text = tool_executor(call)
+                interactions.append(
+                    ToolInteraction(tool_name=call.name, arguments=call.arguments, result_text=result_text)
+                )
                 conversation.append({"role": "tool", "content": result_text})
 
-        return "[El modelo excedió el número máximo de llamadas a herramientas permitidas.]"
+        return CompletionResult(
+            text="[El modelo excedió el número máximo de llamadas a herramientas permitidas.]",
+            tool_interactions=interactions,
+        )

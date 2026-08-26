@@ -16,7 +16,7 @@ from anthropic import Anthropic
 
 from src.interaction_logger import InteractionLogger
 from src.llm.base import LLMProvider
-from src.llm.types import MAX_TOOL_ITERATIONS, ToolCall, ToolSpec
+from src.llm.types import MAX_TOOL_ITERATIONS, CompletionResult, ToolCall, ToolInteraction, ToolSpec
 
 
 class AnthropicProvider(LLMProvider):
@@ -31,7 +31,7 @@ class AnthropicProvider(LLMProvider):
         tools: Optional[List[ToolSpec]] = None,
         tool_executor: Optional[Callable[[ToolCall], str]] = None,
         max_tokens: int = 1024,
-    ) -> str:
+    ) -> CompletionResult:
         anthropic_tools = (
             [{"name": t.name, "description": t.description, "input_schema": t.input_schema} for t in tools]
             if tools
@@ -39,6 +39,7 @@ class AnthropicProvider(LLMProvider):
         )
 
         conversation = list(messages)  # copia local; solo vive durante este turno
+        interactions: List[ToolInteraction] = []
 
         for iteration in range(MAX_TOOL_ITERATIONS):
             request_payload = {
@@ -67,10 +68,14 @@ class AnthropicProvider(LLMProvider):
             )
 
             if response.stop_reason != "tool_use":
-                return "".join(block.text for block in response.content if block.type == "text")
+                text = "".join(block.text for block in response.content if block.type == "text")
+                return CompletionResult(text=text, tool_interactions=interactions)
 
             if tool_executor is None:
-                return "[El modelo pidió usar una tool, pero no hay tool_executor configurado.]"
+                return CompletionResult(
+                    text="[El modelo pidió usar una tool, pero no hay tool_executor configurado.]",
+                    tool_interactions=interactions,
+                )
 
             conversation.append({"role": "assistant", "content": response.content})
 
@@ -80,9 +85,15 @@ class AnthropicProvider(LLMProvider):
                     continue
                 call = ToolCall(name=block.name, arguments=block.input, call_id=block.id)
                 result_text = tool_executor(call)
+                interactions.append(
+                    ToolInteraction(tool_name=call.name, arguments=call.arguments, result_text=result_text)
+                )
                 tool_result_blocks.append(
                     {"type": "tool_result", "tool_use_id": block.id, "content": result_text}
                 )
             conversation.append({"role": "user", "content": tool_result_blocks})
 
-        return "[El modelo excedió el número máximo de llamadas a herramientas permitidas.]"
+        return CompletionResult(
+            text="[El modelo excedió el número máximo de llamadas a herramientas permitidas.]",
+            tool_interactions=interactions,
+        )

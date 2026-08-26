@@ -1,0 +1,29 @@
+{
+  "medications": [
+    {"id": "med-001", "name": "Paracetamol 500mg", "symptoms": ["dolor de cabeza", "fiebre", "dolor muscular"], "price": 15.50, "stock": 120, "requires_prescription": false, "description": "Analgésico y antipirético de uso general."},
+    {"id": "med-002", "name": "Ibuprofeno 400mg", "symptoms": ["dolor de cabeza", "inflamacion", "dolor muscular", "fiebre"], "price": 18.00, "stock": 95, "requires_prescription": false, "description": "Antiinflamatorio no esteroideo (AINE)."},
+    {"id": "med-003", "name": "Loratadina 10mg", "symptoms": ["alergia", "estornudos", "picazon", "rinitis"], "price": 22.75, "stock": 60, "requires_prescription": false, "description": "Antihistamínico para alergias estacionales."},
+    {"id": "med-004", "name": "Omeprazol 20mg", "symptoms": ["acidez", "reflujo", "dolor de estomago"], "price": 25.00, "stock": 80, "requires_prescription": false, "description": "Inhibidor de la bomba de protones."},
+    {"id": "med-005", "name": "Amoxicilina 500mg", "symptoms": ["infeccion", "dolor de garganta", "fiebre"], "price": 45.00, "stock": 40, "requires_prescription": true, "description": "Antibiótico de amplio espectro. Requiere receta."},
+    {"id": "med-006", "name": "Jarabe para la tos (Dextrometorfano)", "symptoms": ["tos", "tos seca", "gripe"], "price": 32.50, "stock": 50, "requires_prescription": false, "description": "Antitusivo de venta libre."},
+    {"id": "med-007", "name": "Suero oral", "symptoms": ["diarrea", "deshidratacion", "vomito"], "price": 12.00, "stock": 100, "requires_prescription": false, "description": "Rehidratación oral."},
+    {"id": "med-008", "name": "Vitamina C 1000mg", "symptoms": ["resfriado", "gripe", "defensas bajas"], "price": 20.00, "stock": 150, "requires_prescription": false, "description": "Suplemento vitamínico."},
+    {"id": "med-009", "name": "Gotas oftálmicas humectantes", "symptoms": ["ojos secos", "irritacion ocular", "picazon en los ojos"], "price": 28.00, "stock": 45, "requires_prescription": false, "description": "Lágrimas artificiales de venta libre."},
+    {"id": "med-010", "name": "Antiácido masticable", "symptoms": ["acidez", "indigestion"], "price": 14.00, "stock": 70, "requires_prescription": false, "description": "Neutralizante de ácido estomacal, sabor menta."}
+  ],
+  "appointment_slots": [
+    {"id": "slot-oft-1", "specialty": "Oftalmología", "date": "2026-09-01", "time": "09:00", "occupied": false},
+    {"id": "slot-oft-2", "specialty": "Oftalmología", "date": "2026-09-01", "time": "10:00", "occupied": false},
+    {"id": "slot-oft-3", "specialty": "Oftalmología", "date": "2026-09-02", "time": "09:00", "occupied": false},
+    {"id": "slot-mg-1", "specialty": "Medicina General", "date": "2026-09-01", "time": "08:00", "occupied": false},
+    {"id": "slot-mg-2", "specialty": "Medicina General", "date": "2026-09-01", "time": "11:00", "occupied": false},
+    {"id": "slot-mg-3", "specialty": "Medicina General", "date": "2026-09-02", "time": "08:00", "occupied": false},
+    {"id": "slot-mg-4", "specialty": "Medicina General", "date": "2026-09-02", "time": "11:00", "occupied": false},
+    {"id": "slot-ped-1", "specialty": "Pediatría", "date": "2026-09-01", "time": "14:00", "occupied": false},
+    {"id": "slot-ped-2", "specialty": "Pediatría", "date": "2026-09-02", "time": "14:00", "occupied": false},
+    {"id": "slot-ped-3", "specialty": "Pediatría", "date": "2026-09-03", "time": "09:00", "occupied": false}
+  ],
+  "orders": [],
+  "appointments": [],
+  "_counters": {}
+}
